@@ -10,6 +10,8 @@ class FeedParser {
 	/** @var array<FeedItem> */
 	private array $items = [];
 
+	private ?string $icon = null;
+
 	private ?string $link = null;
 
 	private ?string $title = null;
@@ -99,6 +101,13 @@ class FeedParser {
 				if ($link?->getAttribute('href'))
 					$this->link = $link->getAttribute('href');
 
+				$icon = $xpath->query('//atom:feed/atom:icon')->item(0)
+					?? $xpath->query('//atom03:feed/atom03:icon')->item(0);
+
+				if ($icon) {
+					$this->icon = $icon->nodeValue;
+				}
+
 				$articles = $xpath->query("//atom:entry");
 
 				if (empty($articles) || $articles->length == 0)
@@ -126,6 +135,12 @@ class FeedParser {
 						$this->link = $link->nodeValue;
 				}
 
+				$icon = $xpath->query("//channel/image/url")->item(0);
+
+				if ($icon) {
+					$this->icon = $icon->nodeValue;
+				}
+
 				/** @var DOMElement $article */
 				foreach ($xpath->query('//channel/item') as $article)
 					$this->items[] = new FeedItem_RSS($article, $this->doc, $this->xpath);
@@ -146,6 +161,13 @@ class FeedParser {
 					$this->link = $link->nodeValue;
 				}
 
+				$icon = $xpath->query("//rssfake:channel/rssfake:image/rssfake:url")->item(0)
+					?? $xpath->query("//rssfake:image/rssfake:url")->item(0);
+
+				if ($icon) {
+					$this->icon = $icon->nodeValue;
+				}
+
 				/** @var DOMElement $article */
 				foreach ($xpath->query('//rssfake:item') as $article)
 					$this->items[] = new FeedItem_RSS($article, $this->doc, $this->xpath);
@@ -158,6 +180,9 @@ class FeedParser {
 
 		if ($this->link)
 			$this->link = trim($this->link);
+
+		if ($this->icon)
+			$this->icon = trim($this->icon);
 
 		return true;
 	}
@@ -206,6 +231,10 @@ class FeedParser {
 
 	function get_link() : string {
 		return clean($this->link ?? '');
+	}
+
+	function get_icon() : string {
+		return clean($this->icon ?? '');
 	}
 
 	function get_title() : string {

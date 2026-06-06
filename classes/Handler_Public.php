@@ -94,6 +94,32 @@ class Handler_Public extends Handler {
 
 			$tpl->setVariable('SELF_URL', htmlspecialchars(Config::get_self_url()), true);
 
+			$feed_icon_url = "";
+
+			if (!$is_cat && is_numeric($feed) && (int) $feed > 0) {
+				$feed_row = ORM::for_table('ttrss_feeds')
+					->select('icon_url')
+					->where('id', (int) $feed)
+					->where('owner_uid', $owner_uid)
+					->find_one();
+
+				if ($feed_row) {
+					$feed_icon_url = trim((string) $feed_row->icon_url);
+				}
+
+				if ($feed_icon_url === "" && Feeds::_has_icon((int) $feed)) {
+					$feed_icon_url = Config::get_self_url() . "/public.php?" . http_build_query([
+						'op' => 'feed_icon',
+						'id' => (int) $feed,
+					]);
+				}
+			}
+
+			if ($feed_icon_url !== "") {
+				$tpl->setVariable('FEED_ICON_URL', htmlspecialchars($feed_icon_url), true);
+				$tpl->addBlock('feed_icon');
+			}
+
 			while ($line = $result->fetch()) {
 
 				$line["content_preview"] = Sanitizer::sanitize(truncate_string(strip_tags($line["content"]), 100, '...'));

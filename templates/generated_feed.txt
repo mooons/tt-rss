@@ -10,6 +10,9 @@
 <link href="${HUB_URL}" rel="hub"/>
 <!-- $EndBlock feed_hub -->
 <link href="${SELF_URL}" rel="alternate"/>
+<!-- $BeginBlock feed_icon -->
+<icon>${FEED_ICON_URL}</icon>
+<!-- $EndBlock feed_icon -->
 <!-- $BeginBlock entry -->
 <entry>
 	<id>${ARTICLE_ID}</id>

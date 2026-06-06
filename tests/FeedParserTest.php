@@ -108,6 +108,19 @@ final class FeedParserTest extends TestCase {
 		$this->assertEquals('Atom 0.3 Feed', $parser->get_title());
 		$this->assertCount(1, $parser->get_items());
 	}
+
+	public function testAtomFeedIconIsExtracted(): void {
+		$xml = '<?xml version="1.0"?>
+		<feed xmlns="http://www.w3.org/2005/Atom">
+			<title>Atom Feed</title>
+			<link href="https://example.com" />
+			<icon>https://example.com/feed-icon.png</icon>
+		</feed>';
+
+		$parser = new FeedParser($xml);
+		$parser->init();
+		$this->assertEquals('https://example.com/feed-icon.png', $parser->get_icon());
+	}
 	
 	// ===== RDF/RSS 1.0 Feed Tests =====
 	
@@ -130,6 +143,43 @@ final class FeedParserTest extends TestCase {
 		$this->assertEquals('RDF Feed', $parser->get_title());
 		$this->assertEquals('https://example.com', $parser->get_link());
 		$this->assertCount(1, $parser->get_items());
+	}
+
+	public function testRssFeedImageUrlIsExtractedAsIcon(): void {
+		$xml = '<?xml version="1.0"?>
+		<rss version="2.0">
+			<channel>
+				<title>Test Feed</title>
+				<link>https://example.com</link>
+				<image>
+					<url>https://example.com/rss-icon.png</url>
+				</image>
+			</channel>
+		</rss>';
+
+		$parser = new FeedParser($xml);
+		$parser->init();
+		$this->assertEquals('https://example.com/rss-icon.png', $parser->get_icon());
+	}
+
+	public function testRdfFeedImageUrlIsExtractedAsIcon(): void {
+		$xml = '<?xml version="1.0"?>
+		<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+		         xmlns="http://purl.org/rss/1.0/">
+			<channel>
+				<title>RDF Feed</title>
+				<link>https://example.com</link>
+			</channel>
+			<image>
+				<title>RDF Feed</title>
+				<url>https://example.com/rdf-icon.png</url>
+				<link>https://example.com</link>
+			</image>
+		</rdf:RDF>';
+
+		$parser = new FeedParser($xml);
+		$parser->init();
+		$this->assertEquals('https://example.com/rdf-icon.png', $parser->get_icon());
 	}
 	
 	// ===== Error Handling Tests =====
@@ -266,6 +316,20 @@ final class FeedParserTest extends TestCase {
 		$parser = new FeedParser($xml);
 		$parser->init();
 		$this->assertEquals('', $parser->get_link());
+	}
+
+	public function testFeedWithoutIconReturnsEmptyString(): void {
+		$xml = '<?xml version="1.0"?>
+		<rss version="2.0">
+			<channel>
+				<title>Test</title>
+				<link>https://example.com</link>
+			</channel>
+		</rss>';
+
+		$parser = new FeedParser($xml);
+		$parser->init();
+		$this->assertEquals('', $parser->get_icon());
 	}
 	
 	public function testFeedWithoutItemsReturnsEmptyArray(): void {

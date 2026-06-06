@@ -293,7 +293,7 @@ class RSSUtils {
 	/** this is used when subscribing */
 	static function update_basic_info(int $feed_id): void {
 		$feed = ORM::for_table('ttrss_feeds')
-			->select_many('id', 'owner_uid', 'feed_url', 'auth_pass', 'auth_login', 'title', 'site_url')
+			->select_many('id', 'owner_uid', 'feed_url', 'auth_pass', 'auth_login', 'title', 'site_url', 'icon_url')
 			->find_one($feed_id);
 
 		if ($feed) {
@@ -309,7 +309,7 @@ class RSSUtils {
 			$basic_info = [];
 
 			$pluginhost->run_hooks_callback(PluginHost::HOOK_FEED_BASIC_INFO, function ($result) use (&$basic_info) {
-				if ($result && (!empty($result['title']) || !empty($result['site_url']))) {
+				if ($result && (!empty($result['title']) || !empty($result['site_url']) || !empty($result['icon_url']))) {
 					$basic_info = $result;
 					return true;
 				}
@@ -332,6 +332,7 @@ class RSSUtils {
 						$basic_info = [
 							'title' => mb_substr(clean($rss->get_title()), 0, 199),
 							'site_url' => mb_substr(UrlHelper::rewrite_relative($feed->feed_url, clean($rss->get_link())), 0, 245),
+							'icon_url' => clean($rss->get_icon()),
 						];
 					} else {
 						Debug::log(sprintf("unable to parse feed for basic info: %s", $rss->error()), Debug::LOG_VERBOSE);
@@ -348,6 +349,18 @@ class RSSUtils {
 
 				if (!empty($basic_info['site_url']) && $feed->site_url != $basic_info['site_url']) {
 					$feed->site_url = $basic_info['site_url'];
+				}
+
+				if (array_key_exists('icon_url', $basic_info)) {
+					$icon_url = clean((string) $basic_info['icon_url']);
+
+					if ($icon_url !== "") {
+						$icon_url = mb_substr((string) UrlHelper::rewrite_relative($feed->feed_url, $icon_url), 0, 245);
+					}
+
+					if ($feed->icon_url != $icon_url) {
+						$feed->icon_url = $icon_url;
+					}
 				}
 
 				$feed->save();
